@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const { runCommand, ensureDir, createFile } = require('../lib/utils');
 
 module.exports = {
@@ -18,33 +19,12 @@ module.exports = {
     await runCommand('npm install -D nodemon', backendDir);
 
     // Create index.js
-    const indexJsContent = `require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-
-const app = express();
-const port = process.env.PORT || 3000;
-
-app.use(cors());
-app.use(express.json());
-
-app.get('/', (req, res) => {
-  res.send('Hello from Express Backend!');
-});
-
-app.get('/healthcheck', (req, res) => {
-  res.status(200).json({ success: true });
-});
-
-app.listen(port, () => {
-  console.log(\`Server is running on http://localhost:\${port}\`);
-});
-`;
+    const templatePath = path.join(__dirname, '../templates/backend/index.js.template');
+    const indexJsContent = fs.readFileSync(templatePath, 'utf8');
     createFile(path.join(backendDir, 'index.js'), indexJsContent);
 
     // Update package.json to add start scripts
     // We need to read, modify, and write package.json
-    const fs = require('fs');
     const packageJsonPath = path.join(backendDir, 'package.json');
     if (fs.existsSync(packageJsonPath)) {
       const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
