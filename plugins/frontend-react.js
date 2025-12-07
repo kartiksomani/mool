@@ -1,5 +1,5 @@
 const path = require('path');
-const { runCommand } = require('../lib/utils');
+const { runCommand, createFile } = require('../lib/utils');
 
 module.exports = {
   name: 'Frontend (React + MUI)',
@@ -32,8 +32,16 @@ module.exports = {
     // @mui/material @emotion/react @emotion/styled
     await runCommand('npm install @mui/material @emotion/react @emotion/styled', frontendDir);
 
-    // Read App.jsx template
     const fs = require('fs');
+
+    // Generate .env files for Debug/Release modes
+    const envDevContent = `VITE_API_URL=http://localhost:3000`;
+    const envProdContent = `VITE_API_URL=https://api.example.com`;
+
+    fs.writeFileSync(path.join(frontendDir, '.env.development'), envDevContent);
+    fs.writeFileSync(path.join(frontendDir, '.env.production'), envProdContent);
+
+    // Read App.jsx template
     const templatePath = path.join(__dirname, '../templates/frontend/App.jsx.template');
     const appJsxContent = fs.readFileSync(templatePath, 'utf8');
 
