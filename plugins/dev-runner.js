@@ -56,7 +56,8 @@ async function start() {
         // Start Backend
         const backendDir = path.join(__dirname, 'backend');
         const backendProcess = runCommand('npm', ['run', 'dev'], backendDir, { 
-            PORT: backendPort 
+            PORT: backendPort,
+            NODE_ENV: 'development'
         });
 
         // Start Frontend

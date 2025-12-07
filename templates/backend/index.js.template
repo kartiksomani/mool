@@ -5,7 +5,20 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors());
+if (process.env.NODE_ENV === 'development') {
+  console.log('Running in Development Mode: Allowing all CORS origins');
+  app.use(cors());
+} else {
+  console.log('Running in Production Mode: Allowing specific CORS origins');
+  const allowedOrigin = process.env.CORS_ORIGIN;
+  if (!allowedOrigin) {
+    console.warn('Warning: CORS_ORIGIN environment variable is not set!');
+  }
+  app.use(cors({
+    origin: allowedOrigin
+  }));
+}
+
 app.use(express.json());
 
 app.get('/', (req, res) => {
