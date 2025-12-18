@@ -23,6 +23,8 @@ You can run both frontend and backend using the dev runner script:
 
 \`\`\`bash
 node start-dev.js
+# Optional: bypass Google login during local development
+node start-dev.js --skip-auth
 \`\`\`
 
 This will start:
@@ -32,6 +34,7 @@ This will start:
 **Configuration:**
 The frontend uses \`.env.development\` for configuration in this mode.
 Default: \`VITE_API_URL=http://localhost:3000\`
+When using `--skip-auth`, both servers run without Google OAuth enforcement so you can focus on UI changes.
 
 ### Production (Release Mode)
 

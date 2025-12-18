@@ -4,6 +4,7 @@ const { runCommand, ensureDir, createFile } = require('../lib/utils');
 
 module.exports = {
   name: 'Backend (Express.js)',
+  priority: 10,
   generate: async (targetDir) => {
     const backendDir = path.join(targetDir, 'backend');
     ensureDir(backendDir);

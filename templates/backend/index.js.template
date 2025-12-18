@@ -1,6 +1,8 @@
-require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+require('dotenv').config();
+
+/* IMPORTS */
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -21,9 +23,13 @@ if (process.env.NODE_ENV === 'development') {
 
 app.use(express.json());
 
+/* MIDDLEWARE */
+
 app.get('/', (req, res) => {
   res.send('Hello from Express Backend!');
 });
+
+/* ROUTES */
 
 app.get('/healthcheck', (req, res) => {
   res.status(200).json({ success: true });

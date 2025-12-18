@@ -1,0 +1,129 @@
+const { spawn } = require('child_process');
+const net = require('net');
+const path = require('path');
+const fs = require('fs');
+
+function parseFlags(argv) {
+  const normalized = argv.map((arg) => arg.toLowerCase());
+  const skipAuth = normalized.some((arg) => {
+    const trimmed = arg.replace(/^-+/, '');
+    const [flagName] = trimmed.split('=');
+    return flagName === 'skip-auth' || flagName === 'skipauth';
+  });
+  return { skipAuth };
+}
+
+function getAvailablePort(startPort) {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+    server.listen(startPort, () => {
+      const { port } = server.address();
+      server.close(() => resolve(port));
+    });
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        resolve(getAvailablePort(startPort + 1));
+      } else {
+        reject(err);
+      }
+    });
+  });
+}
+
+function runCommand(command, args, cwd, env = {}) {
+  const child = spawn(command, args, {
+    cwd,
+    shell: true,
+    stdio: 'inherit',
+    env: { ...process.env, ...env }
+  });
+
+  child.on('error', (err) => {
+    console.error(`Failed to start command: ${command} ${args.join(' ')}`, err);
+  });
+
+  return child;
+}
+
+function loadEnvFile(filePath) {
+  if (!fs.existsSync(filePath)) {
+    return {};
+  }
+  const content = fs.readFileSync(filePath, 'utf8');
+  return content
+    .split(/\r?\n/)
+    .reduce((acc, line) => {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) {
+        return acc;
+      }
+      const eqIndex = trimmed.indexOf('=');
+      if (eqIndex === -1) {
+        return acc;
+      }
+      const key = trimmed.slice(0, eqIndex);
+      const value = trimmed.slice(eqIndex + 1);
+      acc[key] = value.trim();
+      return acc;
+    }, {});
+}
+
+async function start() {
+  try {
+    const { skipAuth } = parseFlags(process.argv.slice(2));
+
+    if (skipAuth) {
+      console.warn('Skipping auth validation (--skip-auth). Do not use this option in production.');
+    }
+
+    const backendPort = await getAvailablePort(3000);
+    const frontendPort = await getAvailablePort(5173);
+
+    const frontendEnvPath = path.join(__dirname, 'frontend', '.env.development');
+    const frontendEnv = loadEnvFile(frontendEnvPath);
+
+    const resolvedFrontendGoogleId = skipAuth
+      ? undefined
+      : process.env.VITE_GOOGLE_CLIENT_ID || frontendEnv.VITE_GOOGLE_CLIENT_ID;
+    const resolvedBackendGoogleId = skipAuth
+      ? undefined
+      : process.env.GOOGLE_CLIENT_ID || resolvedFrontendGoogleId;
+
+    if (!skipAuth && !resolvedBackendGoogleId) {
+      console.warn('Google OAuth client ID not found. Update frontend/.env.development to enable Google login locally.');
+    }
+
+    console.log(`Starting Middleware/Backend on port ${backendPort}...`);
+    console.log(`Starting Frontend on port ${frontendPort}...`);
+
+    const backendDir = path.join(__dirname, 'backend');
+    const backendProcess = runCommand('npm', ['run', 'dev'], backendDir, {
+      PORT: backendPort,
+      NODE_ENV: 'development',
+      ...(resolvedBackendGoogleId ? { GOOGLE_CLIENT_ID: resolvedBackendGoogleId } : {}),
+      ...(skipAuth ? { SKIP_AUTH: 'true' } : {})
+    });
+
+    const frontendDir = path.join(__dirname, 'frontend');
+    const frontendProcess = runCommand('npm', ['run', 'dev', '--', '--port', frontendPort], frontendDir, {
+      VITE_API_PORT: backendPort,
+      VITE_API_URL: `http://localhost:${backendPort}`,
+      ...(resolvedFrontendGoogleId ? { VITE_GOOGLE_CLIENT_ID: resolvedFrontendGoogleId } : {}),
+      ...(skipAuth ? { VITE_SKIP_AUTH: 'true' } : {})
+    });
+
+    const cleanup = () => {
+      console.log('\nStopping processes...');
+      backendProcess.kill();
+      frontendProcess.kill();
+      process.exit();
+    };
+
+    process.on('SIGINT', cleanup);
+    process.on('SIGTERM', cleanup);
+  } catch (err) {
+    console.error('Error starting server:', err);
+  }
+}
+
+start();

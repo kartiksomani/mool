@@ -42,6 +42,13 @@ if (fs.existsSync(pluginsDir)) {
     console.warn('No plugins directory found!');
 }
 
+// Sort plugins by priority (default 50)
+plugins.sort((a, b) => {
+    const priorityA = a.priority || 50;
+    const priorityB = b.priority || 50;
+    return priorityA - priorityB;
+});
+
 async function runModules() {
     for (const plugin of plugins) {
         if (typeof plugin.generate === 'function') {

@@ -3,6 +3,7 @@ const { runCommand, createFile } = require('../lib/utils');
 
 module.exports = {
   name: 'Frontend (React + MUI)',
+  priority: 10,
   generate: async (targetDir) => {
     const frontendDir = path.join(targetDir, 'frontend');
 
