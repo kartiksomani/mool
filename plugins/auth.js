@@ -99,7 +99,7 @@ function Private() {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
     if (skipAuth) {
-      fetch(`${apiUrl}/protected-data`)
+      fetch(apiUrl + '/protected-data')
         .then(res => res.json())
         .then(payload => setData(payload))
         .catch(err => console.error(err));
@@ -113,9 +113,9 @@ function Private() {
     }
 
     // Call protected endpoint
-    fetch(`${apiUrl}/protected-data`, {
+    fetch(apiUrl + '/protected-data', {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'Authorization': 'Bearer ' + token
       }
     })
     .then(res => {
