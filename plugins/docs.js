@@ -34,7 +34,7 @@ This will start:
 **Configuration:**
 The frontend uses \`.env.development\` for configuration in this mode.
 Default: \`VITE_API_URL=http://localhost:3000\`
-When using `--skip-auth`, both servers run without Google OAuth enforcement so you can focus on UI changes.
+When using \`--skip-auth\`, both servers run without Google OAuth enforcement so you can focus on UI changes.
 
 ### Production (Release Mode)
 
